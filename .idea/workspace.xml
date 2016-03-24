@@ -27,12 +27,12 @@
       <file leaf-file-name="Main.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/com/markaldrich/chip8/Main.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="5.955357">
-              <caret line="468" column="25" selection-start-line="468" selection-start-column="25" selection-end-line="468" selection-end-column="25" />
+            <state vertical-scroll-proportion="0.75446427">
+              <caret line="516" column="80" selection-start-line="516" selection-start-column="80" selection-end-line="516" selection-end-column="80" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#10182#10183#0" expanded="true" />
-                <element signature="e#10204#10205#0" expanded="true" />
+                <element signature="e#10555#10556#0" expanded="true" />
+                <element signature="e#10577#10578#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -639,12 +639,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/markaldrich/chip8/Main.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="5.955357">
-          <caret line="468" column="25" selection-start-line="468" selection-start-column="25" selection-end-line="468" selection-end-column="25" />
+        <state vertical-scroll-proportion="0.75446427">
+          <caret line="516" column="80" selection-start-line="516" selection-start-column="80" selection-end-line="516" selection-end-column="80" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#10182#10183#0" expanded="true" />
-            <element signature="e#10204#10205#0" expanded="true" />
+            <element signature="e#10555#10556#0" expanded="true" />
+            <element signature="e#10577#10578#0" expanded="true" />
           </folding>
         </state>
       </provider>

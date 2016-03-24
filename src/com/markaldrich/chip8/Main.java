@@ -7,6 +7,7 @@ import com.markaldrich.jgl.JGLGameProperties;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.Random;
@@ -134,11 +135,21 @@ public class Main extends JGLGame {
 	public void render(Graphics2D g) {
 		g.setColor(Color.WHITE);
 		g.setFont(new Font("Courier New", Font.PLAIN, 12));
-		g.drawString("Test!", 0, 12);
-		g.drawString("The name of the rom is " + file.getName(), 0, 24);
+		g.drawString("The name of the rom is " + file.getName(), 0, 12);
 		
 		if(checkDrawFlag()) {
-			// TODO: render the graphics buffer to the screen
+			BufferedImage image = new BufferedImage(64, 32, BufferedImage.TYPE_INT_RGB);
+			Graphics2D graphics2D = (Graphics2D) image.getGraphics();
+			for(int y = 0; y < 32; y++) {
+				for(int x = 0; x < 64; x++) {
+					if(gfx[x * y] != 0) {
+						// TODO: draw pixel, not 1x1 rectangle
+						graphics2D.fillRect(x, y, 1, 1);
+					}
+				}
+			}
+			
+			g.drawImage(image, 0, 0, props.getGameWidth(), props.getGameHeight(), null);
 		}
 	}
 	
@@ -503,7 +514,7 @@ public class Main extends JGLGame {
 			}
 		}
 		
-		JGLGameProperties props = new JGLGameProperties(file.getName(), 800, 600);
+		JGLGameProperties props = new JGLGameProperties(file.getName(), 800, 400);
 		JGLGame game = new Main(props);
 		JGLGameController.startGame(game, props);
 	}

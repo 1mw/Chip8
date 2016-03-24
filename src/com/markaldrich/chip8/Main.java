@@ -6,8 +6,10 @@ import com.markaldrich.jgl.JGLGameProperties;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.nio.file.Files;
+import java.util.Random;
 
 /**
  * Created by maste on 3/24/2016.
@@ -16,6 +18,25 @@ public class Main extends JGLGame {
 	
 	private JGLGameProperties props;
 	private static File file;
+	
+	public static int[] chip8_fontset = {
+		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+		0x20, 0x60, 0x20, 0x20, 0x70, // 1
+		0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+		0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+		0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+		0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+		0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+		0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+		0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+		0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+		0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+		0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+		0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+		0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+	};
 	
 	/*
 	 * Emulator variables
@@ -56,6 +77,9 @@ public class Main extends JGLGame {
 	
 	// Keyboard memory
 	public int[] key = new int[16];
+	
+	// Draw flag
+	public boolean drawFlag = false;
 	
 	public Main(JGLGameProperties props) {
 		super(props);
@@ -123,6 +147,88 @@ public class Main extends JGLGame {
 		// TODO: Use delta timing to actually run the CPU at the correct frequency
 		// it is currently running at 60hz
 		cycle();
+		
+		// Update keyboard
+		if(checkIfKeyIsDown(KeyEvent.VK_X)) {
+			key[0] = 1;
+		} else {
+			key[0] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_1)) {
+			key[1] = 1;
+		} else {
+			key[1] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_2)) {
+			key[2] = 1;
+		} else {
+			key[2] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_3)) {
+			key[3] = 1;
+		} else {
+			key[3] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_Q)) {
+			key[4] = 1;
+		} else {
+			key[4] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_W)) {
+			key[5] = 1;
+		} else {
+			key[5] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_E)) {
+			key[6] = 1;
+		} else {
+			key[6] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_A)) {
+			key[7] = 1;
+		} else {
+			key[7] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_S)) {
+			key[8] = 1;
+		} else {
+			key[8] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_D)) {
+			key[9] = 1;
+		} else {
+			key[9] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_Z)) {
+			key[0xA] = 1;
+		} else {
+			key[0xA] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_C)) {
+			key[0xB] = 1;
+		} else {
+			key[0xB] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_4)) {
+			key[0xC] = 1;
+		} else {
+			key[0xC] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_R)) {
+			key[0xD] = 1;
+		} else {
+			key[0xD] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_F)) {
+			key[0xE] = 1;
+		} else {
+			key[0xE] = 0;
+		}
+		if(checkIfKeyIsDown(KeyEvent.VK_V)) {
+			key[0xF] = 1;
+		} else {
+			key[0xF] = 0;
+		}
 	}
 	
 	public void cycle() {
@@ -261,6 +367,110 @@ public class Main extends JGLGame {
 				I = opcode & 0x0FFF;
 				break;
 			}
+			case 0xB000: {
+				int nnn = opcode & 0x0FFF;
+				pc = nnn + (V[0] & 0xFF);
+				break;
+			}
+			case 0xC000: {
+				int x = (opcode & 0x0F00) >> 8;
+				int nn = (opcode & 0x00FF);
+				V[x] = nn & (new Random().nextInt(256));
+				break;
+			}
+			case 0xD000: {
+				int x = (opcode & 0x0F00) >> 8;
+				int y = (opcode & 0x00F0) >> 4;
+				int height = (opcode & 0x000F);
+				int pixel;
+				
+				V[0xF] = 0;
+				for(int yLine = 0; yLine < height; yLine++) {
+					pixel = read(I + yLine);
+					for(int xLine = 0; xLine < 8; xLine++) {
+						if((pixel & (0x80 >> xLine)) != 0) {
+							if(gfx[(x + xLine + ((y + yLine) * 64))] == 1) {
+								V[0xF] = 1;
+							}
+							gfx[x + xLine + ((y + yLine) * 64)] ^= 1;
+						}
+					}
+				}
+				
+				drawFlag = true;
+				break;
+			}
+			case 0xE000: {
+				int x = (opcode & 0x0F00) >> 8;
+				// TODO: There is probably a much simpler way to do this, but who knows...
+				if((opcode & 0x00FF) == 0x009E) {
+					if(key[x] != 0) {
+						pc += 2;
+					}
+				} else {
+					if(key[x] == 0) {
+						pc += 2;
+					}
+				}
+				break;
+			}
+			case 0xF000: {
+				int x = (opcode & 0x0F00) >> 8;
+				switch(opcode & 0x00FF) {
+					case 0x07: {
+						V[x] = delayTimer;
+						break;
+					}
+					case 0x0A: {
+						int keyPressed = -1;
+						loop: while(true) {
+							for(int i = 0; i < key.length; i++) {
+								if(key[i] != 0) {
+									keyPressed = i;
+									break loop;
+								}
+							}
+						}
+						V[x] = keyPressed;
+						break;
+					}
+					case 0x15: {
+						delayTimer = V[x];
+						break;
+					}
+					case 0x18: {
+						soundTimer = V[x];
+						break;
+					}
+					case 0x1E: {
+						I += V[x];
+						break;
+					}
+					case 0x29: {
+						I = V[x] * 5;
+						break;
+					}
+					case 0x33: {
+						int value = V[x];
+						write(value / 100, I);
+						write((value % 100) / 10, I + 1);
+						write((value % 100) % 10, I + 2);
+						break;
+					}
+					case 0x55: {
+						for(int i = 0; i <= x; i++) {
+							write(V[i], I + i);
+						}
+						break;
+					}
+					case 0x65: {
+						for(int i = 0; i <= x; i++) {
+							V[i] = read(I + i);
+						}
+						break;
+					}
+				}
+			}
 		}
 		
 		pc += 2;
@@ -280,8 +490,7 @@ public class Main extends JGLGame {
 	}
 	
 	public boolean checkDrawFlag() {
-		// TODO: Actually check the memory for the draw flag
-		return false;
+		return drawFlag;
 	}
 	
 	public static void main(String[] args) {

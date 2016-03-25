@@ -17,6 +17,8 @@ import java.util.Random;
  */
 public class Main extends JGLGame {
 	
+	public static boolean DEBUGGING = true;
+	
 	private JGLGameProperties props;
 	private static File file;
 	
@@ -53,10 +55,10 @@ public class Main extends JGLGame {
 	 * 0x050-0x0A0 - Used for the built in 4x5 pixel font set (0-F)
 	 * 0x200-0xFFF - Program ROM and work RAM
 	 */
-	public int[] memory = new int[4096];
+	public int[] memory;
 	
 	// CPU registers
-	public int[] V = new int[16];
+	public int[] V;
 	
 	// Index register
 	public int I;
@@ -65,7 +67,7 @@ public class Main extends JGLGame {
 	public int pc;
 	
 	// Graphics memory
-	public int[] gfx = new int[64 * 32];
+	public int[] gfx;
 	
 	// Two countdown registers
 	public int delayTimer;
@@ -73,14 +75,14 @@ public class Main extends JGLGame {
 	public int soundTimer;
 	
 	// Stack and stack pointer
-	public int[] stack = new int[16];
+	public int[] stack;
 	public int sp;
 	
 	// Keyboard memory
-	public int[] key = new int[16];
+	public int[] key;
 	
 	// Draw flag
-	public boolean drawFlag = false;
+	public boolean drawFlag;
 	
 	public Main(JGLGameProperties props) {
 		super(props);
@@ -90,12 +92,7 @@ public class Main extends JGLGame {
 	@Override
 	public void initGame() {
 		// TODO: Set up graphics and input
-		pc = 0x200;
-		opcode = 0;
-		I = 0;
-		sp = 0;
-		delayTimer = 0;
-		soundTimer = 0;
+		reset();
 		
 		// TODO: Load fontset
 		
@@ -153,129 +150,196 @@ public class Main extends JGLGame {
 		}
 	}
 	
+	public void reset() {
+		pc = 0x200;
+		opcode = 0;
+		I = 0;
+		sp = 0;
+		delayTimer = 0;
+		soundTimer = 0;
+		memory = new int[4096];
+		V = new int[16];
+		gfx = new int[64 * 32];
+		stack = new int[16];
+		key = new int[16];
+		drawFlag = false;
+		for(int i = 0; i < 80; i++) {
+			memory[i] = chip8_fontset[i];
+		}
+	}
+	
 	@Override
 	public void update() {
-		// TODO: Use delta timing to actually run the CPU at the correct frequency
-		// it is currently running at 60hz
-		cycle();
-		
-		// Update keyboard
-		if(checkIfKeyIsDown(KeyEvent.VK_X)) {
-			key[0] = 1;
+		if(!DEBUGGING) {
+			// Fetch opcode
+			opcode = memory[pc] << 8 | memory[pc + 1];
+			
+			// TODO: Use delta timing to actually run the CPU at the correct frequency
+			// it is currently running at 60hz
+			cycle();
+			
+			// Update keyboard
+			if(checkIfKeyIsDown(KeyEvent.VK_X)) {
+				key[0] = 1;
+			} else {
+				key[0] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_1)) {
+				key[1] = 1;
+			} else {
+				key[1] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_2)) {
+				key[2] = 1;
+			} else {
+				key[2] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_3)) {
+				key[3] = 1;
+			} else {
+				key[3] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_Q)) {
+				key[4] = 1;
+			} else {
+				key[4] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_W)) {
+				key[5] = 1;
+			} else {
+				key[5] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_E)) {
+				key[6] = 1;
+			} else {
+				key[6] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_A)) {
+				key[7] = 1;
+			} else {
+				key[7] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_S)) {
+				key[8] = 1;
+			} else {
+				key[8] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_D)) {
+				key[9] = 1;
+			} else {
+				key[9] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_Z)) {
+				key[0xA] = 1;
+			} else {
+				key[0xA] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_C)) {
+				key[0xB] = 1;
+			} else {
+				key[0xB] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_4)) {
+				key[0xC] = 1;
+			} else {
+				key[0xC] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_R)) {
+				key[0xD] = 1;
+			} else {
+				key[0xD] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_F)) {
+				key[0xE] = 1;
+			} else {
+				key[0xE] = 0;
+			}
+			if(checkIfKeyIsDown(KeyEvent.VK_V)) {
+				key[0xF] = 1;
+			} else {
+				key[0xF] = 0;
+			}
 		} else {
-			key[0] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_1)) {
-			key[1] = 1;
-		} else {
-			key[1] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_2)) {
-			key[2] = 1;
-		} else {
-			key[2] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_3)) {
-			key[3] = 1;
-		} else {
-			key[3] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_Q)) {
-			key[4] = 1;
-		} else {
-			key[4] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_W)) {
-			key[5] = 1;
-		} else {
-			key[5] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_E)) {
-			key[6] = 1;
-		} else {
-			key[6] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_A)) {
-			key[7] = 1;
-		} else {
-			key[7] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_S)) {
-			key[8] = 1;
-		} else {
-			key[8] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_D)) {
-			key[9] = 1;
-		} else {
-			key[9] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_Z)) {
-			key[0xA] = 1;
-		} else {
-			key[0xA] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_C)) {
-			key[0xB] = 1;
-		} else {
-			key[0xB] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_4)) {
-			key[0xC] = 1;
-		} else {
-			key[0xC] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_R)) {
-			key[0xD] = 1;
-		} else {
-			key[0xD] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_F)) {
-			key[0xE] = 1;
-		} else {
-			key[0xE] = 0;
-		}
-		if(checkIfKeyIsDown(KeyEvent.VK_V)) {
-			key[0xF] = 1;
-		} else {
-			key[0xF] = 0;
+			if(!test00E0()) {
+				System.out.println("0x00E0 failed");
+			}
+			if(!test00EE()) {
+				System.out.println("0x00EE failed pc=" + Integer.toHexString(pc));
+				for(int i = 0; i < stack.length; i++) {
+					System.out.println("" + i + ": 0x" + Integer.toHexString(stack[i]));
+				}
+			}
+			if(!test1NNN()) {
+				System.out.println("0x1NNN failed");
+			}
+			if(!test2NNN()) {
+				System.out.println("0x2NNN failed");
+			}
+			if(!test3XNN_1()) {
+				System.out.println("0x3XNN_1 failed");
+			}
+			if(!test3XNN_2()) {
+				System.out.println("0x3XNN_2 failed");
+			}
+			if(!test4XNN_1()) {
+				System.out.println("0x4XNN_1 failed");
+			}
+			if(!test4XNN_2()) {
+				System.out.println("0x4XNN_2 failed");
+			}
+			if(!test5XY0_1()) {
+				System.out.println("0x5XY0_1 failed");
+			}
+			if(!test5XY0_2()) {
+				System.out.println("0x5XY0_2 failed");
+			}
+			if(!test6XNN()) {
+				System.out.println("0x6XNN failed");
+			}
+			if(!test7XNN()) {
+				System.out.println("0x7XNN failed");
+			}
+			
+			if(!testDXYN()) {
+				System.out.println("0xDXYN failed");
+			}
 		}
 	}
 	
 	public void cycle() {
-		// Fetch opcode
-		opcode = memory[pc] << 8 | memory[pc + 1];
+		System.out.println("opcode -> 0x" + Integer.toHexString(opcode));
 		
 		// Decode and execute opcode
 		switch(opcode & 0xF000) {
 			case 0x0000: {
-				if((opcode & 0x000F) == 0x0000) {
+				if(opcode == 0x00E0) {
 					// 0x00E0
 					// Clear the screen
 					for(int i = 0; i < gfx.length; i++) {
-						// TODO: is this right?
 						gfx[i] = 0;
 					}
-				} else {
+				} else if(opcode == 0x00EE) {
 					// 0x00EE
 					// TODO: just a guess
-					pc = stack[--sp];
+					pc = popFromStack() - 2;
 				}
+				break;
 			}
 			case 0x1000: {
 				// TODO: good?
-				pc = opcode & 0x0FFF;
+				pc = (opcode & 0x0FFF) - 2;
 				break;
 			}
 			case 0x2000: {
-				stack[sp++] = pc;
-				pc = opcode & 0x0FFF;
+				System.out.println("0x2NNN executed");
+				pushToStack(pc);
+				pc = (opcode & 0x0FFF) - 2;
 				break;
 			}
 			case 0x3000: {
 				int registerIndex = (opcode & 0x0F00) >> 8;
 				int indexValue = V[registerIndex];
-				if((indexValue & 0x00FF) == (opcode & 0x00FF)) {
+				if(indexValue == (opcode & 0x00FF)) {
 					// Skip an instruction here, another one will be skipped when this method
 					// is over.
 					pc += 2;
@@ -309,7 +373,8 @@ public class Main extends JGLGame {
 			case 0x7000: {
 				int x = (opcode & 0x0F00) >> 8;
 				int nn = opcode & 0x00FF;
-				V[x] += nn;
+				int temp = V[x] + (opcode & 0x00FF);
+				V[x] = (temp < 256) ? temp : (temp - 256);
 				break;
 			}
 			case 0x8000: {
@@ -321,15 +386,15 @@ public class Main extends JGLGame {
 						break;
 					}
 					case 0x0001: {
-						V[x] = V[x] | V[y];
+						V[x] |= V[y];
 						break;
 					}
 					case 0x0002: {
-						V[x] = V[x] & V[y];
+						V[x] &= V[y];
 						break;
 					}
 					case 0x0003: {
-						V[x] = V[x] ^ V[y];
+						V[x] ^= V[y];
 						break;
 					}
 					case 0x0004: {
@@ -337,25 +402,34 @@ public class Main extends JGLGame {
 						if(V[x] > 0xFF) {
 							// If the resulting value is over 0xFF, or the maximum, set the carry flag
 							V[0xF] = 1;
+							V[x] -= 256;
 						}
-						V[x] &= 0x00FF;
 						break;
 					}
 					case 0x0005: {
-						V[0xF] = (V[y] > V[x]) ? 0 : 1;
-						V[x] -= V[y];
-						V[x] &= 0x00FF;
+						if(V[x] > V[y]) {
+							V[0xF] = 0;
+							V[x] -= V[y];
+						} else {
+							V[0xF] = 1;
+							V[x] -= V[y] + 256;
+						}
 						break;
 					}
 					case 0x0006: {
 						V[0xF] = V[x] & 0x1;
 						V[x] = V[x] >> 1;
+						// TODO: Maybe? V[x] &= 0xFF;
 						break;
 					}
 					case 0x0007: {
-						V[0xF] = (V[x] > V[y]) ? 0 : 1;
-						V[y] -= V[x];
-						V[y] &= 0x00FF;
+						if(V[y] > V[x]) {
+							V[0xF] = 1;
+							V[y] -= V[x];
+						} else {
+							V[0xF] = 1;
+							V[y] -= V[x] + 256;
+						}
 						break;
 					}
 					case 0x000E: {
@@ -380,7 +454,8 @@ public class Main extends JGLGame {
 			}
 			case 0xB000: {
 				int nnn = opcode & 0x0FFF;
-				pc = nnn + (V[0] & 0xFF);
+				pc = nnn + (V[0] & 0xFF) - 2;
+				// pc = nnn + (I & 0xFF);
 				break;
 			}
 			case 0xC000: {
@@ -390,6 +465,7 @@ public class Main extends JGLGame {
 				break;
 			}
 			case 0xD000: {
+				/*
 				int x = (opcode & 0x0F00) >> 8;
 				int y = (opcode & 0x00F0) >> 4;
 				int height = (opcode & 0x000F);
@@ -402,6 +478,8 @@ public class Main extends JGLGame {
 						if((pixel & (0x80 >> xLine)) != 0) {
 							if(gfx[(x + xLine + ((y + yLine) * 64))] == 1) {
 								V[0xF] = 1;
+							} else {
+								V[0xF] = 0;
 							}
 							gfx[x + xLine + ((y + yLine) * 64)] ^= 1;
 						}
@@ -410,6 +488,131 @@ public class Main extends JGLGame {
 				
 				drawFlag = true;
 				break;
+				*/
+				/*
+				int xRegister = (opcode & 0x0F00) >> 8;
+				int yRegister = (opcode & 0x00F0) >> 4;
+				int xPos = V[xRegister];
+				int yPos = V[yRegister];
+				V[0xF] = 0;
+				
+				for (int yIndex = 0; yIndex < (opcode & 0xF); yIndex++) {
+					
+					int colorByte = read(I + yIndex);
+					int yCoord = yPos + yIndex;
+					yCoord = yCoord % 32;
+					
+					int mask = 0x80;
+					
+					for (int xIndex = 0; xIndex < 8; xIndex++) {
+						int xCoord = xPos + xIndex;
+						xCoord = xCoord % 64;
+						
+						boolean turnOn = (colorByte & mask) > 0;
+						boolean currentOn = gfx[yCoord * 64 + xCoord] != 0;
+						
+						if (turnOn && currentOn) {
+							V[0xF] |= 1;
+							turnOn = false;
+						} else if (!turnOn && currentOn) {
+							turnOn = true;
+						}
+						
+						gfx[yCoord * 64 + xCoord] = (turnOn) ? 1 : 0;
+						// mScreen.drawPixel(xCoord, yCoord, turnOn);
+						mask = mask >> 1;
+					}
+				}
+				drawFlag = true;
+				break;
+				*/
+				/*
+				int x = V[(opcode & 0x0F00) >> 8];
+				int y = V[(opcode & 0x00F0) >> 4];
+				int height = opcode & 0x000F;
+				int pixel;
+				
+				V[0xF] = 0;
+				for (int yline = 0; yline < height; yline++)
+				{
+					pixel = memory[I + yline];
+					for(int xline = 0; xline < 8; xline++)
+					{
+						if((pixel & (0x80 >> xline)) != 0)
+						{
+							if(gfx[(x + xline + ((y + yline) * 64))] == 1)
+								V[0xF] = 1;
+							gfx[x + xline + ((y + yline) * 64)] ^= 1;
+						}
+					}
+				}
+				
+				drawFlag = true;
+				break;
+				*/
+				
+				
+				int rows;
+				int x;
+				int y;
+				
+				rows = opcode & 0x000F;
+				
+				int reg = opcode & 0x0F00;
+				reg >>= 8;
+				
+				int reg2 = opcode & 0x00F0;
+				reg2 >>= 4;
+				
+				x = V[reg];
+				y = V[reg2];
+				
+				V[0xF] = 0;
+				for (int row = 0; row < rows; row++) {
+					int bits = memory[I + row];
+					for (int column = 0; column < 8; column++) {
+						int index = (y + row) * 64 // Row offset
+								+ x // X coordinate
+								+ column;
+						
+						if ((bits & (0x80 >> column)) > 0) {
+							if (gfx[index] != 0) {
+								V[0xF] = 1;
+							}
+							gfx[index] ^= 1;
+						}
+					}
+				}
+				
+				drawFlag = true;
+				break;
+				
+				/*
+				int X = (opcode & 0x0F00) >> 8;
+				int Y = (opcode & 0x00F0) >> 4;
+				int N = (opcode & 0x000F);
+				if (N == 0) N = 16;
+				for (int yline = 0; yline < N; yline++)
+				{
+					int data = memory[I + yline];
+					for (int xpix = 0; xpix < 8; xpix++)
+					{
+						if((data & (0x80 >> xpix)) != 0)
+						{
+							if ((V[X] + xpix) < 64 && (V[Y] + yline) < 32 && (V[X] + xpix) >= 0 && (V[Y] + yline) >= 0)
+							{
+								if (gfx[(V[X] + xpix)*2][(V[Y] + yline)*2] == 1) V[0xF] = 1;
+								gfx[(V[X] + xpix)*2][(V[Y] + yline)*2] ^= 1;
+								gfx[(V[X] + xpix)*2 + 1][(V[Y] + yline)*2] ^= 1;
+								gfx[(V[X] + xpix)*2][(V[Y] + yline)*2 + 1] ^= 1;
+								gfx[(V[X] + xpix)*2 + 1][(V[Y] + yline)*2 + 1] ^= 1;
+							}
+						}
+					}
+				}
+				drawFlag = true;
+				break;
+				*/
 			}
 			case 0xE000: {
 				int x = (opcode & 0x0F00) >> 8;
@@ -482,6 +685,9 @@ public class Main extends JGLGame {
 					}
 				}
 			}
+			default: {
+				System.out.println("Unknown opcode: 0x" + Integer.toHexString(opcode));
+			}
 		}
 		
 		pc += 2;
@@ -504,18 +710,171 @@ public class Main extends JGLGame {
 		return drawFlag;
 	}
 	
+	public void pushToStack(int x) {
+		stack[sp++] = x;
+	}
+	
+	public int popFromStack() {
+		return stack[--sp];
+	}
+	
 	public static void main(String[] args) {
-		while (true) {
-			JFileChooser chooser = new JFileChooser();
-			int returnVal = chooser.showOpenDialog(null);
-			if(returnVal == JFileChooser.APPROVE_OPTION) {
-				file = chooser.getSelectedFile();
-				break;
+		if(!DEBUGGING) {
+			while(true) {
+				JFileChooser chooser = new JFileChooser();
+				int returnVal = chooser.showOpenDialog(null);
+				if(returnVal == JFileChooser.APPROVE_OPTION) {
+					file = chooser.getSelectedFile();
+					break;
+				}
 			}
 		}
 		
-		JGLGameProperties props = new JGLGameProperties(file.getName(), 800, 400);
+		JGLGameProperties props = new JGLGameProperties((!DEBUGGING) ? file.getName() : "Debugging", 800, 400);
 		JGLGame game = new Main(props);
 		JGLGameController.startGame(game, props);
+	}
+	
+	public boolean test00E0() {
+		reset();
+		System.out.println("Test 0x00E0");
+		opcode = 0x00E0;
+		cycle();
+		for(int i = 0; i < gfx.length; i++) {
+			if(gfx[i] != 0) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	public boolean test00EE() {
+		reset();
+		System.out.println("Test 0x00EE");
+		pushToStack(0xDEA);
+		opcode = 0x00EE;
+		cycle();
+		return pc == 0xDEA;
+	}
+	
+	public boolean test1NNN() {
+		reset();
+		System.out.println("Test 0x1NNN");
+		opcode = 0x1EEF;
+		cycle();
+		return pc == 0x0EEF;
+	}
+	
+	public boolean test2NNN() {
+		reset();
+		System.out.println("Test 0x2NNN");
+		opcode = 0x2EEF;
+		cycle();
+		return popFromStack() == 0x200;
+	}
+	
+	public boolean test3XNN_1() {
+		reset();
+		System.out.println("Test 0x3XNN_1");
+		opcode = 0x30FF;
+		cycle();
+		return pc == 0x202;
+	}
+	
+	public boolean test3XNN_2() {
+		reset();
+		System.out.println("Test 0x3XNN_2");
+		V[0] = 0xFF;
+		opcode = 0x30FF;
+		cycle();
+		return pc == 0x204;
+	}
+	
+	public boolean test4XNN_1() {
+		reset();
+		System.out.println("Test 0x4XNN_1");
+		V[0] = 0xFF;
+		opcode = 0x40FF;
+		cycle();
+		return pc == 0x202;
+	}
+	public boolean test4XNN_2() {
+		reset();
+		System.out.println("Test 0x4XNN_2");
+		opcode = 0x40FF;
+		cycle();
+		return pc == 0x204;
+	}
+	
+	public boolean test5XY0_1() {
+		reset();
+		System.out.println("Test 0x5XY0_1");
+		V[0] = 0x01;
+		V[1] = 0x00;
+		opcode = 0x5010;
+		cycle();
+		return pc == 0x202;
+	}
+	public boolean test5XY0_2() {
+		reset();
+		System.out.println("Test 0x5XY0_2");
+		V[0] = 0x01;
+		V[1] = 0x01;
+		opcode = 0x5010;
+		cycle();
+		return pc == 0x204;
+	}
+	
+	public boolean test6XNN() {
+		reset();
+		System.out.println("Test 0x6XNN");
+		opcode = 0x6A10;
+		cycle();
+		return V[0xA] == 0x10;
+	}
+	
+	public boolean test7XNN() {
+		reset();
+		System.out.println("Test 0x7XNN");
+		V[0xA] = 0x10;
+		opcode = 0x7A10;
+		cycle();
+		return V[0xA] == (0x10 + 0x10);
+	}
+	
+	public boolean testDXYN() {
+		reset();
+		System.out.println("Test 0xDXYN");
+		V[0] = 0;
+		V[1] = 4;
+		I = 0;
+		write(I, 0b10011001);
+		opcode = 0xD011;
+		cycle();
+		
+		printScreen();
+		
+		for(int i = 256; i < 264; i++) {
+			System.out.println("gfx[" + i + "] = " + gfx[i]);
+		}
+		
+		return gfx[256] == 1
+				&& gfx[257] == 0
+				&& gfx[258] == 0
+				&& gfx[259] == 1
+				&& gfx[260] == 1
+				&& gfx[261] == 0
+				&& gfx[262] == 0
+				&& gfx[263] == 1;
+	}
+	
+	public void printScreen() {
+		for(int y = 0; y < 32; y++) {
+			for(int x = 0; x < 64; x++) {
+				System.out.print(gfx[y * 64 + x]);
+			}
+			System.out.println();
+		}
 	}
 }
